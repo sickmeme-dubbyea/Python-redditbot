@@ -2,25 +2,13 @@ import praw
 from pushbullet import Pushbullet
 import os
 import time
-from config import token, db_file
-import sqlite3
-from sqlite3 import Error
-
-
-# Create connection to sqlite3 instance
-def db_connection(db_file):
-    connection = 'NULL'
-    try:
-        connection = sqlite3.connect(db_file)
-    except Error:
-        print(Error)
-    return connection
-
+from config import token
 
 # Define Reddit
 reddit = praw.Reddit('bot1', config_interpolation="basic")
-reddit.read_only = True  # set our reddit instance to read only.. realistically was unnecessary
 
+pb = Pushbullet(token)
+reddit.read_only = True  # set our reddit instance to read only.. realistically was unnecessary
 # What are we interested in
 searchList = ['jpc', 'crye', 'criterion', 'rosco']
 
@@ -36,8 +24,7 @@ else:  # Load the existing file if it already exists
 iteration = 0
 while True:
     try:
-        for submission in reddit.subreddit("gundeals").new(
-                limit=1000):  # Get the last 1000 from the gun deals subreddit
+        for submission in reddit.subreddit("gundeals").new(limit=100):  # Get the last 1000 from the gun deals subreddit
             if submission.id not in posts_read:
                 if any(matches in submission.title.lower() for matches in searchList):
                     pb.push_link(title=submission.title, url=submission.url)

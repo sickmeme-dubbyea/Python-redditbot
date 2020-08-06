@@ -24,6 +24,19 @@ def read_table(conn, sql_table):
     rows = cur.fetchall()
     matches = [element for tupl in rows for element in tupl]
     return matches
+def read_table_posts(conn):
+    """
+    Query all rows in the table
+    :param conn: the Connection object
+    :param sql_table: the queriable table
+    :return:
+    """
+    cur = conn.cursor()
+    query = 'SELECT p_id FROM POSTS'
+    cur.execute(query)
+    rows = cur.fetchall()
+    matches = [element for tupl in rows for element in tupl]
+    return matches
 def create_entry(conn, found_data):
     """
     Create a new project into the projects table
@@ -31,7 +44,7 @@ def create_entry(conn, found_data):
     :param data:
     :return: data
     """
-    sql = '''INSERT INTO (p_id,p_title,p_url) VALUES(?,?,?)'''
+    sql = '''INSERT INTO posts (p_id,p_title,p_url) VALUES(?,?,?)'''
     cur = conn.cursor()
     cur.execute(sql, found_data)
     conn.commit()
@@ -44,10 +57,12 @@ reddit.read_only = True  # set our reddit instance to read only.. realistically 
 database = db_connection(db_file)
 try:
     for submission in reddit.subreddit("gundeals").new(limit=300):  # Get the last 1000 from the gun deals subreddit
-        #res = set(tuple(map(str, lowerString.split(' '))))
         wants = read_table(database,'seek')
         if any(matches in submission.title.lower() for matches in wants):
-            create_entry(database,(submission.id,submission.title,submission.url))
+            inserts = read_table_posts(database)
+            if not any(matches in submission.id for matches in inserts):
+                data = (submission.id,submission.title,submission.url)
+                create_entry(database, data)
             # Need to clean up the output before going into the database.
 except ValueError:
     print("Oh Shit")
